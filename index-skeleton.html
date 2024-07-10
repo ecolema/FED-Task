@@ -32,10 +32,31 @@
 
     <script>
         $(document).ready(function() {
-    
-            // Function to fetch data and populate the table
-            // This can be in a separate file or embedded here
+            const apiURL = 'https://jsonplaceholder.typicode.com/todos';
 
+            function fetchTodos() {
+                $.ajax({
+                    url: apiURL,
+                    method: 'GET',
+                    success: function(data) {
+                        $('#dataTable tbody').empty();
+                        data.forEach(todo => {
+                            $('#dataTable tbody').append(`
+                                <tr>
+                                    <td>${todo.id}</td>
+                                    <td>${todo.title}</td>
+                                    <td>${todo.completed ? 'Yes' : 'No'}</td>
+                                </tr>
+                            `);
+                        });
+                    },
+                    error: function() {
+                        alert('Failed to fetch data.');
+                    }
+                });
+            }
+
+            fetchTodos();
         });
     </script>
 </body>
