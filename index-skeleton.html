@@ -4,18 +4,25 @@
     <title>Todo App</title>
     <!-- Include Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .sortable:hover {
+            cursor: pointer;
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
     <div class="container mt-5">
         <div class="row">
             <div class="col-md-12">
                 <h1>Todo App</h1>
+                <input type="text" id="search" class="form-control mb-3" placeholder="Search todos...">
                 <table id="dataTable" class="table table-striped table-hover">
                     <thead>
                         <tr>
-                            <th class="header">ID</th>
-                            <th class="header">Title</th>
-                            <th class="header">Completed</th>
+                            <th class="header sortable" data-sort="id">ID</th>
+                            <th class="header sortable" data-sort="title">Title</th>
+                            <th class="header sortable" data-sort="completed">Completed</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -25,7 +32,7 @@
             </div>
         </div>
     </div>
-    <footer class="text-center mt-4 mb-3">
+    <footer class="text-center mt-4">
         <a href="https://github.com/ecolema/FED-Task">GitHub Repository</a>
     </footer>
 
@@ -36,28 +43,65 @@
     <script>
         $(document).ready(function() {
             const apiURL = 'https://jsonplaceholder.typicode.com/todos';
+            let todos = [];
+            let currentSort = { column: 'id', order: 'asc' };
 
             function fetchTodos() {
                 $.ajax({
                     url: apiURL,
                     method: 'GET',
                     success: function(data) {
-                        $('#dataTable tbody').empty();
-                        data.forEach(todo => {
-                            $('#dataTable tbody').append(`
-                                <tr>
-                                    <td>${todo.id}</td>
-                                    <td>${todo.title}</td>
-                                    <td>${todo.completed ? 'Yes' : 'No'}</td>
-                                </tr>
-                            `);
-                        });
+                        todos = data;
+                        renderTable();
                     },
                     error: function() {
                         alert('Failed to fetch data.');
                     }
                 });
             }
+
+            function renderTable() {
+                const searchQuery = $('#search').val().toLowerCase();
+                let filteredTodos = todos.filter(todo => 
+                    todo.title.toLowerCase().includes(searchQuery)
+                );
+
+                filteredTodos = sortTodos(filteredTodos, currentSort.column, currentSort.order);
+
+                $('#dataTable tbody').empty();
+                filteredTodos.forEach(todo => {
+                    $('#dataTable tbody').append(`
+                        <tr>
+                            <td>${todo.id}</td>
+                            <td>${todo.title}</td>
+                            <td>${todo.completed ? 'Yes' : 'No'}</td>
+                        </tr>
+                    `);
+                });
+            }
+
+            function sortTodos(data, column, order) {
+                return data.sort((a, b) => {
+                    if (a[column] < b[column]) return order === 'asc' ? -1 : 1;
+                    if (a[column] > b[column]) return order === 'asc' ? 1 : -1;
+                    return 0;
+                });
+            }
+
+            $('#search').on('input', function() {
+                renderTable();
+            });
+
+            $('#dataTable').on('click', '.sortable', function() {
+                const column = $(this).data('sort');
+                if (currentSort.column === column) {
+                    currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSort.column = column;
+                    currentSort.order = 'asc';
+                }
+                renderTable();
+            });
 
             fetchTodos();
         });
